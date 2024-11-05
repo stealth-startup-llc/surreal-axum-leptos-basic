@@ -49,6 +49,6 @@ pub async fn open_db_connection() {
             return;
         }
     };
-    
+
     println!("Users: {:?}", users);
 }

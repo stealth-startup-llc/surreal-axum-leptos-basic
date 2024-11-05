@@ -1,20 +1,14 @@
-
-
 #[cfg(feature = "ssr")]
 #[tokio::main]
 async fn main() {
     use axum::Router;
+    use axum::routing::get;
     use leptos::*;
     use leptos_axum::{generate_route_list, LeptosRoutes};
     use sal_v2::app::*;
     use sal_v2::fileserv::file_and_error_handler;
-    use sal_v2::db::open_db_connection; // NEW
-    open_db_connection().await; // NEW
-    // Setting get_configuration(None) means we'll be using cargo-leptos's env values
-    // For deployment these variables are:
-    // <https://github.com/leptos-rs/start-axum#executing-a-server-on-a-remote-machine-without-the-toolchain>
-    // Alternately a file can be specified such as Some("Cargo.toml")
-    // The file would need to be included with the executable when moved to deployment
+    use sal_v2::api::get_user;
+
     let conf = get_configuration(None).await.unwrap();
     let leptos_options = conf.leptos_options;
     let addr = leptos_options.site_addr;
@@ -22,12 +16,13 @@ async fn main() {
 
     // build our application with a route
     let app = Router::new()
+        .route("/api/get_user", get(get_user))
         .leptos_routes(&leptos_options, routes, App)
         .fallback(file_and_error_handler)
         .with_state(leptos_options);
 
     let listener = tokio::net::TcpListener::bind(&addr).await.unwrap();
-    logging::log!("listening on http://{}", &addr);
+    logging::log!("listening on https://{}", &addr);
     axum::serve(listener, app.into_make_service())
         .await
         .unwrap();
